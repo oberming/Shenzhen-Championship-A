@@ -1,4 +1,4 @@
-function [InitialDataAmong ,PauseTotal, InitialDelay, PauseCount] = ModelB3(E2ERTT, PlayAvgSpeed, InitialSpeedPeak, CodeSpeed)
+﻿function [InitialDataAmong ,PauseTotal, InitialDelay, PauseCount] = ModelC(E2ERTT, PlayAvgSpeed, InitialSpeedPeak, CodeSpeed)
 % The discribetion is in describe.m
 % 引入 Download Temp Pool
     global DataSize
