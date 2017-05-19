@@ -1,4 +1,4 @@
-﻿function [InitialDownloadTime, pauseTotal, pausePercentage, InitialDelay] = ModelA(E2ERTT, playAvgSpeed, InitialSpeedPeak, codeSpeed)
+﻿function [InitialDownloadTime, pauseTotal, pausePercentage, InitialDelay] = Modeling(E2ERTT, playAvgSpeed, InitialSpeedPeak, codeSpeed)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% MODEL  1 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                      %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 思    路 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
