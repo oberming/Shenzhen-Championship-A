@@ -1,4 +1,4 @@
-cc
+cc;
 load data
 OOInitialDataAmong  = zeros(1, max(size(CodeSpeed)));
 OOInitialDelay      = zeros(1, max(size(CodeSpeed)));

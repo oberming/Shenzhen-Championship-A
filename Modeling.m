@@ -1,4 +1,4 @@
-﻿function [InitialDataAmong ,PauseTotal, InitialDelay, PauseCount] = Modeling(E2ERTT, PlayAvgSpeed, InitialSpeedPeak, CodeSpeed)
+function [InitialDataAmong ,PauseTotal, InitialDelay, PauseCount] = Modeling(E2ERTT, PlayAvgSpeed, InitialSpeedPeak, CodeSpeed)
 % The discribetion is in describe.m
 % 引入 Download Temp Pool
     global DataSize
@@ -31,7 +31,7 @@ end
 
 function [PauseTotal, PauseCount] = ModelP(DownloadTempPool, PlayAvgSpeed, CodeSpeed, E2ERTT)
     global DataSize    
-    k                   = 2.1282;                             % 协议速度的倍数
+    k                   = 1.4;                             % 协议速度的倍数
     time                = 0;
     PauseTotal          = zeros(DataSize,1);
     StartSymbol         = true (DataSize,1);
@@ -40,7 +40,7 @@ function [PauseTotal, PauseCount] = ModelP(DownloadTempPool, PlayAvgSpeed, CodeS
     DataPerE2E          = PlayAvgSpeed .* E2ERTT;                       % Data Downloaded Per E2ERTT
     PlayPool            = DownloadTempPool ./ k;
     DownloadTempPool    = zeros(DataSize,1);
-    VideoPackageTime    = 900;                                           %单包视频的播放时间
+    VideoPackageTime    = 2100;                                           %单包视频的播放时间
     VideoPackageDataSiz = VideoPackageTime .* CodeSpeed .* k;           %单包视频的下载数据量
     while time < 30000
         time                = time + 1;
