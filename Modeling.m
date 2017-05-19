@@ -23,7 +23,7 @@ function [InitialDataAmong, InitialDelay, DownloadTempPool] = ModelI(E2ERTT, Ini
                               0.75 * MaxCwnd .* (CurrentCwnd >= 0.5 * MaxCwnd);
         CurrentSpeed        = (~StartSymbol) .* CurrentCwnd .* MSS;
         DownloadTempPool    = DownloadTempPool + CurrentSpeed;
-        StartSymbol         = logical((DownloadTempPool > CodeSpeed .* 4096)  + ...
+        StartSymbol         = logical((DownloadTempPool > CodeSpeed .* 4192)  + ...
                                       (InitialSpeedPeak < 7000) .* (PlayAvgSpeed < 362) .* (DownloadTempPool > 200 * CodeSpeed));
     end
     InitialDataAmong = DownloadTempPool / 8;
@@ -40,7 +40,7 @@ function [PauseTotal, PauseCount] = ModelP(DownloadTempPool, PlayAvgSpeed, CodeS
     DataPerE2E          = PlayAvgSpeed .* E2ERTT;                       % Data Downloaded Per E2ERTT
     PlayPool            = DownloadTempPool ./ k;
     DownloadTempPool    = zeros(DataSize,1);
-    VideoPackageTime    = 2100;                                           %单包视频的播放时间
+    VideoPackageTime    = 10;                                      %单包视频的播放时间
     VideoPackageDataSiz = VideoPackageTime .* CodeSpeed .* k;           %单包视频的下载数据量
     while time < 30000
         time                = time + 1;
@@ -51,7 +51,7 @@ function [PauseTotal, PauseCount] = ModelP(DownloadTempPool, PlayAvgSpeed, CodeS
         PlayPool            = PlayPool - StartSymbol .* CodeSpeed + MovedDataSize ./ k;
         PauseCount          = PauseCount + (PlayPool < CodeSpeed) .* StartSymbol;
         StartSymbol         = StartSymbol - (PlayPool < CodeSpeed) .* StartSymbol + ...          %刚刚开始卡顿的数目
-                              (~StartSymbol) .* (PlayPool > 2700  .*  CodeSpeed ./ k);
+                              (~StartSymbol) .* (PlayPool > 800  .*  CodeSpeed);
         PauseTotal          = PauseTotal + (~StartSymbol);
     end
 end
