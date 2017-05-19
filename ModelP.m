@@ -1,4 +1,4 @@
-function PauseTotal = ModelB1P(TempPool, PlayAvgSpeed, CodeSpeed)
+function PauseTotal = ModelP(TempPool, PlayAvgSpeed, CodeSpeed)
     DataSize    = max(size(CodeSpeed));
     time        = 0;
     PauseTotal  = zeros(DataSize,1);

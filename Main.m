@@ -7,7 +7,7 @@ OOPauseCount        = zeros(1, max(size(CodeSpeed)));
 tic
     for i = 1:max(size(CodeSpeed))
         [OOInitialDataAmong(i), OOPauseTotal(i), OOInitialDelay(i), OOPauseCount(i)] = ...
-        ModelB2(E2ERTT(i), PlayAvgSpeed(i), InitialSpeedPeak(i), CodeSpeed(i));
+        Modeling(E2ERTT(i), PlayAvgSpeed(i), InitialSpeedPeak(i), CodeSpeed(i));
     end
 toc
 clear i;

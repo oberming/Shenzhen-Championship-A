@@ -1,4 +1,4 @@
-function [InitialDataAmong, InitialDelay, TempPool] = ModelB1I(E2ERTT, InitialSpeedPeak, CodeSpeed, PlayAvgSpeed)
+function [InitialDataAmong, InitialDelay, TempPool] = ModelI(E2ERTT, InitialSpeedPeak, CodeSpeed, PlayAvgSpeed)
     DataSize        = max(size(CodeSpeed));
     InitialDelay    = (7 * E2ERTT .* ones(DataSize, 1));
     StartSymbol     = false(DataSize, 1);
