@@ -31,27 +31,27 @@ end
 
 function [PauseTotal, PauseCount] = ModelP(DownloadTempPool, PlayAvgSpeed, CodeSpeed, E2ERTT)
     global DataSize    
-    k                   = 1.4;                             % 协议速度的倍数
+    k                   = 2.12;                             % 协议速度的倍数
     time                = 0;
     PauseTotal          = zeros(DataSize,1);
     StartSymbol         = true (DataSize,1);
     PauseCount          = zeros(DataSize,1);
     E2ECount            = zeros(DataSize,1);                            % 传输轮次计数
     DataPerE2E          = PlayAvgSpeed .* E2ERTT;                       % Data Downloaded Per E2ERTT
-    PlayPool            = DownloadTempPool ./ k;
-    DownloadTempPool    = zeros(DataSize,1);
-    VideoPackageTime    = 10;                                      %单包视频的播放时间
-    VideoPackageDataSiz = VideoPackageTime .* CodeSpeed .* k;           %单包视频的下载数据量
+    %PlayPool            = DownloadTempPool ./ k;
+    %DownloadTempPool    = zeros(DataSize,1);
+    %VideoPackageTime    = 10;                                      %单包视频的播放时间
+    %VideoPackageDataSiz = VideoPackageTime .* CodeSpeed .* k;           %单包视频的下载数据量
     while time < 30000
         time                = time + 1;
         CountJudge          = (fix(time ./ E2ERTT) > E2ECount);
-        MovedDataSize       = fix(DownloadTempPool ./ VideoPackageDataSiz) .* VideoPackageDataSiz;
+        %MovedDataSize       = fix(DownloadTempPool ./ VideoPackageDataSiz) .* VideoPackageDataSiz;
         E2ECount            = CountJudge + E2ECount;
-        DownloadTempPool    = DownloadTempPool + CountJudge .* DataPerE2E - MovedDataSize;
-        PlayPool            = PlayPool - StartSymbol .* CodeSpeed + MovedDataSize ./ k;
-        PauseCount          = PauseCount + (PlayPool < CodeSpeed) .* StartSymbol;
-        StartSymbol         = StartSymbol - (PlayPool < CodeSpeed) .* StartSymbol + ...          %刚刚开始卡顿的数目
-                              (~StartSymbol) .* (PlayPool > 800  .*  CodeSpeed);
+        DownloadTempPool    = DownloadTempPool + CountJudge .* DataPerE2E - StartSymbol .* CodeSpeed .* k;
+        %PlayPool            = PlayPool - StartSymbol .* CodeSpeed + MovedDataSize ./ k;
+        PauseCount          = PauseCount + (DownloadTempPool < CodeSpeed .* k) .* StartSymbol;
+        StartSymbol         = StartSymbol - (DownloadTempPool < CodeSpeed .* k) .* StartSymbol + ...          %刚刚开始卡顿的数目
+                              (~StartSymbol) .* (DownloadTempPool > 2700  .*  CodeSpeed);
         PauseTotal          = PauseTotal + (~StartSymbol);
     end
 end
