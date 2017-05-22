@@ -12,7 +12,7 @@ function [InitialDataAmong, InitialDelay, DownloadTempPool] = ModelI(E2ERTT, Ini
     InitialDelay        = (7 * E2ERTT .* ones(DataSize, 1));
     StartSymbol         = false(DataSize, 1);
     DownloadTempPool    = (zeros(DataSize, 1));
-    MSS                 = 2144;
+    MSS                 = 10;
     MaxCwnd             = InitialSpeedPeak .* E2ERTT ./ MSS;
     CurrentCwnd         = 5;                                            %cwnd1 = 10
     TransRotate         = 0;
