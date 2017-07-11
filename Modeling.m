@@ -44,9 +44,10 @@ function [PauseTotal, PauseCount] = ModelP(DownloadTempPool, PlayAvgSpeed, CodeS
 end
 
 function Rnd = CSShake(sigma)
-    tmp = normrnd(0,sigma,1,300);
+    tmp = MaxwellRnd(0,sigma,1,300);
     Rnd = zeros(1,30000);
     for ii = 1:30000
         Rnd(ii) = 1 + tmp(fix(1 + (ii-1)/100));
     end
 end
+
