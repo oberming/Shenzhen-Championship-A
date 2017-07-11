@@ -4,7 +4,7 @@ function [InitialDataAmong ,PauseTotal, InitialDelay, PauseCount] = Modeling(E2E
     global DataSize
     DataSize        = max(size(CodeSpeed));
     [InitialDataAmong ,InitialDelay, DownloadTempPool]  = ModelI(E2ERTT, InitialSpeedPeak, CodeSpeed, PlayAvgSpeed);
-    [PauseTotal, PauseCount]                            = ModelP(DownloadTempPool, PlayAvgSpeed, CodeSpeed, E2ERTT);
+    [PauseTotal, PauseCount]                            = ModelP(DownloadTempPool, PlayAvgSpeed, CodeSpeed);
 end
 
 function [InitialDataAmong, InitialDelay, DownloadTempPool] = ModelI(E2ERTT, InitialSpeedPeak, CodeSpeed, PlayAvgSpeed)
@@ -26,18 +26,27 @@ function [InitialDataAmong, InitialDelay, DownloadTempPool] = ModelI(E2ERTT, Ini
     InitialDataAmong = DownloadTempPool / 8;
 end
 
-function [PauseTotal, PauseCount] = ModelP(DownloadTempPool, PlayAvgSpeed, CodeSpeed, E2ERTT)
+function [PauseTotal, PauseCount] = ModelP(DownloadTempPool, PlayAvgSpeed, CodeSpeed)
     global DataSize    
     time                = 0;
     PauseTotal          = zeros(DataSize, 1);
     StartSymbol         = true (DataSize, 1);
     PauseCount          = zeros(DataSize, 1);
+    Rnd                 = CSShake(0.35);
     while time < 30000
         time                = time + 1;
-        DownloadTempPool    = DownloadTempPool - StartSymbol .* CodeSpeed + PlayAvgSpeed;
-        PauseCount          = PauseCount + (DownloadTempPool < CodeSpeed) .* StartSymbol;
-        StartSymbol         = StartSymbol - (DownloadTempPool < CodeSpeed) .* StartSymbol + ...                 %刚刚开始卡顿的数目
+        DownloadTempPool    = DownloadTempPool - StartSymbol .* CodeSpeed .* Rnd(time) + PlayAvgSpeed;
+        PauseCount          = PauseCount + (DownloadTempPool < CodeSpeed .* Rnd(time)) .* StartSymbol;
+        StartSymbol         = StartSymbol - (DownloadTempPool < CodeSpeed .* Rnd(time)) .* StartSymbol + ...                 %刚刚开始卡顿的数目
                             (~StartSymbol) .* (DownloadTempPool > 2700 * CodeSpeed);                       %卡顿还没有开始的数目
         PauseTotal          = PauseTotal + (~StartSymbol);
+    end
+end
+
+function Rnd = CSShake(sigma)
+    tmp = normrnd(0,sigma,1,300);
+    Rnd = zeros(1,30000);
+    for ii = 1:30000
+        Rnd(ii) = 1 + tmp(fix(1 + (ii-1)/100));
     end
 end
