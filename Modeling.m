@@ -32,7 +32,7 @@ function [PauseTotal, PauseCount] = ModelP(DownloadTempPool, PlayAvgSpeed, CodeS
     PauseTotal          = zeros(DataSize, 1);
     StartSymbol         = true (DataSize, 1);
     PauseCount          = zeros(DataSize, 1);
-    Rnd                 = CSShake(0.35);
+    Rnd                 = CSShake(5);
     while time < 30000
         time                = time + 1;
         DownloadTempPool    = DownloadTempPool - StartSymbol .* CodeSpeed .* Rnd(time) + PlayAvgSpeed;

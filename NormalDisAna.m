@@ -8,7 +8,6 @@ hold on
 plot(-1:0.01:1, 17 * gaussmf(-1:0.01:1,[t,0]));
 hold off
 
-cc
 for t = 1:30000
     a(t) = abs(mean(normrnd(0,0.35,t,1)));
 end
