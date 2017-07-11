@@ -28,19 +28,16 @@ end
 
 function [PauseTotal, PauseCount] = ModelP(DownloadTempPool, PlayAvgSpeed, CodeSpeed, E2ERTT)
     global DataSize    
-    k = (3.46e-4 .* PlayAvgSpeed + 0.1);
-    k = (k > 1.2) .* k + (k <= 1.2) .* 1.2;
     time                = 0;
     PauseTotal          = zeros(DataSize, 1);
     StartSymbol         = true (DataSize, 1);
     PauseCount          = zeros(DataSize, 1);
-    DownloadTempPool    = DownloadTempPool ./ k;
     while time < 30000
         time                = time + 1;
-        DownloadTempPool    = DownloadTempPool - StartSymbol .* CodeSpeed + PlayAvgSpeed  ./ k;
+        DownloadTempPool    = DownloadTempPool - StartSymbol .* CodeSpeed + PlayAvgSpeed;
         PauseCount          = PauseCount + (DownloadTempPool < CodeSpeed) .* StartSymbol;
         StartSymbol         = StartSymbol - (DownloadTempPool < CodeSpeed) .* StartSymbol + ...                 %刚刚开始卡顿的数目
-                            (~StartSymbol) .* (DownloadTempPool > 2700 * CodeSpeed ./ k);                       %卡顿还没有开始的数目
+                            (~StartSymbol) .* (DownloadTempPool > 2700 * CodeSpeed);                       %卡顿还没有开始的数目
         PauseTotal          = PauseTotal + (~StartSymbol);
     end
 end
