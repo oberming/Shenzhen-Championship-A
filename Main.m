@@ -9,7 +9,7 @@ RndPAS              = MaxwellRnd(30000);
 tic
     for i = 1:max(size(CodeSpeed))
         [OOInitialDataAmong(i), OOPauseTotal(i), OOInitialDelay(i), OOPauseCount(i)] = ...
-        Modeling(E2ERTT(i), PlayAvgSpeed(i), InitialSpeedPeak(i), CodeSpeed(i), RndCS, RndPAS);
+        Modeling(E2ERTT(i), PlayAvgSpeed(i), InitialSpeedPeak(i), CodeSpeed(i), RndCS, RndPAS, TotalAvgSpeed(i));
     end
 toc
 clear i;

@@ -1,17 +1,25 @@
-function [InitialDataAmong, PauseTotal, InitialDelay, PauseCount] = Modeling(E2ERTT, PlayAvgSpeed, InitialSpeedPeak, CodeSpeed, RndCS, RndPAS)
+function [InitialDataAmong, PauseTotal, InitialDelay, PauseCount] = Modeling(E2ERTT, PlayAvgSpeed, InitialSpeedPeak, CodeSpeed, RndCS, RndPAS, TotalAvgSpeed)
     global DataSize
     DataSize                                            = max(size(CodeSpeed));
-    [InitialDataAmong ,InitialDelay, DownloadTempPool]  = ModelI(E2ERTT, InitialSpeedPeak, CodeSpeed, PlayAvgSpeed);
+    InitialPreDelay                                     = InitialPrepare(E2ERTT, TotalAvgSpeed, InitialSpeedPeak);
+    [InitialDataAmong ,InitialDelay, DownloadTempPool]  = ModelI(E2ERTT, InitialSpeedPeak, CodeSpeed, TotalAvgSpeed);
+    InitialDelay                                        = InitialDelay + InitialPreDelay;
     [PauseTotal, PauseCount]                            = ModelP(DownloadTempPool, PlayAvgSpeed, CodeSpeed, E2ERTT, RndCS, RndPAS);
 end
 
-function [InitialDataAmong, InitialDelay, DownloadTempPool] = ModelI(E2ERTT, InitialSpeedPeak, CodeSpeed, PlayAvgSpeed)
+function InitialPreDelay = InitialPrepare(E2ERTT, TotalAvgSpeed, InitialSpeedPeak)
+    InitialPreDelay = 2 .* E2ERTT;
+    adPack          = 3e6;
+    InitialPreDelay = InitialPreDelay + adPack ./ TotalAvgSpeed .* (TotalAvgSpeed >= 380);
+end
+
+function [InitialDataAmong, InitialDelay, DownloadTempPool] = ModelI(E2ERTT, InitialSpeedPeak, CodeSpeed, TotalAvgSpeed)
     global DataSize    
-    InitialDelay        = (5.5 .* E2ERTT .* ones(DataSize, 1));
+    InitialDelay        = zeros(DataSize, 1);
     StartSymbol         = false(DataSize, 1);
-    DownloadTempPool    = (zeros(DataSize, 1));
+    DownloadTempPool    = zeros(DataSize, 1);
     MaxCwnd             = fix(InitialSpeedPeak .* E2ERTT);
-    CurrentCwnd         = 1072;                                            %cwnd1 = 2144
+    CurrentCwnd         = 10720;                                            %cwnd1 = 21440
     while sum(StartSymbol) < DataSize
         InitialDelay        = InitialDelay + (~StartSymbol) .* E2ERTT;
         CurrentCwnd         = 2 * CurrentCwnd .* (CurrentCwnd < 0.5 * MaxCwnd) + ...
@@ -19,7 +27,7 @@ function [InitialDataAmong, InitialDelay, DownloadTempPool] = ModelI(E2ERTT, Ini
         CurrentSpeed        = (~StartSymbol) .* CurrentCwnd;
         DownloadTempPool    = DownloadTempPool + CurrentSpeed;
         StartSymbol         = logical((DownloadTempPool > CodeSpeed .* 4192)  + ...
-                                      (InitialSpeedPeak < 7000) .* (PlayAvgSpeed < 362) .* (DownloadTempPool > 200 * CodeSpeed));
+                                      (TotalAvgSpeed < 380) .* (DownloadTempPool > 200 * CodeSpeed));
     end
     InitialDataAmong = DownloadTempPool / 8;
 end
