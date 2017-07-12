@@ -1,5 +1,5 @@
 cc
-load data
+load exdata
 OOInitialDataAmong  = zeros(1, max(size(CodeSpeed)));
 OOInitialDelay      = zeros(1, max(size(CodeSpeed)));
 OOPauseTotal        = zeros(1, max(size(CodeSpeed)));
