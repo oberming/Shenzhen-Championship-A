@@ -32,22 +32,23 @@ function [PauseTotal, PauseCount] = ModelP(DownloadTempPool, PlayAvgSpeed, CodeS
     PauseTotal          = zeros(DataSize, 1);
     StartSymbol         = true (DataSize, 1);
     PauseCount          = zeros(DataSize, 1);
-    Rnd                 = CSShake(5);
+    Rnd                 = CSShake();
     while time < 30000
         time                = time + 1;
-        DownloadTempPool    = DownloadTempPool - StartSymbol .* CodeSpeed .* Rnd(time) + PlayAvgSpeed;
-        PauseCount          = PauseCount + (DownloadTempPool < CodeSpeed .* Rnd(time)) .* StartSymbol;
-        StartSymbol         = StartSymbol - (DownloadTempPool < CodeSpeed .* Rnd(time)) .* StartSymbol + ...                 %刚刚开始卡顿的数目
-                            (~StartSymbol) .* (DownloadTempPool > 2700 * CodeSpeed);                       %卡顿还没有开始的数目
+        PlayTime            = time - PauseTotal;                                                                                 %播放时间
+        
+        DownloadTempPool    = DownloadTempPool - StartSymbol .* CodeSpeed .* Rnd(PlayTime) + PlayAvgSpeed;
+        PauseCount          = PauseCount + (DownloadTempPool < CodeSpeed .* Rnd(PlayTime)) .* StartSymbol;
+        StartSymbol         = StartSymbol - (DownloadTempPool < CodeSpeed .* Rnd(PlayTime)) .* StartSymbol + ...                 %刚刚开始卡顿的数目
+                            (~StartSymbol) .* (DownloadTempPool > 2700 * CodeSpeed);                                             %卡顿还没有开始的数目
         PauseTotal          = PauseTotal + (~StartSymbol);
     end
 end
 
-function Rnd = CSShake(sigma)
-    tmp = MaxwellRnd(0,sigma,1,300);
-    Rnd = zeros(1,30000);
+function Rnd = CSShake()
+    tmp = MaxwellRnd(300);
+    Rnd = zeros(30000,1);
     for ii = 1:30000
-        Rnd(ii) = 1 + tmp(fix(1 + (ii-1)/100));
+        Rnd(ii) = tmp(fix(1 + (ii-1)/100));
     end
 end
-

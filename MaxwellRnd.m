@@ -1,11 +1,11 @@
-function Rnd = MaxwellRnd(xmean, nn)
+function Rnd = MaxwellRnd(nn)
     Rnd = zeros(1,nn);
     for ii = 1:nn
         tmpx = 0;
         tmpy = 1;
-        while tmpy > 32./pi./pi.*exp(-4.*tmpx.^2./pi./xmean.^2).*tmpx.^2
+        while tmpy > 32./pi.^2.*exp(-4.*tmpx.^2./pi)*tmpx^2
             tmpy = rand();
-            tmpx = 5*xmean*rand();
+            tmpx = 15*rand();
         end
     Rnd(ii) = tmpx;
     end
