@@ -1,5 +1,5 @@
 function Rnd = MaxwellRnd(nn)
-    Rnd = zeros(1,nn);
+    Rnd = zeros(nn,1);
     for ii = 1:nn
         tmpx = 0;
         tmpy = 1;

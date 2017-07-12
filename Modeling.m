@@ -1,10 +1,8 @@
-function [InitialDataAmong ,PauseTotal, InitialDelay, PauseCount] = Modeling(E2ERTT, PlayAvgSpeed, InitialSpeedPeak, CodeSpeed)
-% The discribetion is in describe.m
-% 引入 Download Temp Pool
+function [InitialDataAmong ,PauseTotal, InitialDelay, PauseCount] = Modeling(E2ERTT, PlayAvgSpeed, InitialSpeedPeak, CodeSpeed, RndCS, RndPAS)
     global DataSize
     DataSize        = max(size(CodeSpeed));
     [InitialDataAmong ,InitialDelay, DownloadTempPool]  = ModelI(E2ERTT, InitialSpeedPeak, CodeSpeed, PlayAvgSpeed);
-    [PauseTotal, PauseCount]                            = ModelP(DownloadTempPool, PlayAvgSpeed, CodeSpeed, E2ERTT);
+    [PauseTotal, PauseCount]                            = ModelP(DownloadTempPool, PlayAvgSpeed, CodeSpeed, E2ERTT, RndCS, RndPAS);
 end
 
 function [InitialDataAmong, InitialDelay, DownloadTempPool] = ModelI(E2ERTT, InitialSpeedPeak, CodeSpeed, PlayAvgSpeed)
@@ -26,31 +24,20 @@ function [InitialDataAmong, InitialDelay, DownloadTempPool] = ModelI(E2ERTT, Ini
     InitialDataAmong = DownloadTempPool / 8;
 end
 
-function [PauseTotal, PauseCount] = ModelP(DownloadTempPool, PlayAvgSpeed, CodeSpeed, E2ERTT)
-    global DataSize    
+function [PauseTotal, PauseCount] = ModelP(DownloadTempPool, PlayAvgSpeed, CodeSpeed, E2ERTT, RndCS, RndPAS)
+    global DataSize
     time                = 0;
     PauseTotal          = zeros(DataSize, 1);
     StartSymbol         = true (DataSize, 1);
     PauseCount          = zeros(DataSize, 1);
-    Rnd                 = CSShake();
-    TransRotate         = zeros(DataSize, 1);
     while time < 30000
         time                = time + 1;
-        PlayTime            = time - PauseTotal;                                                                                 %播放时间
-        TransRotate         = TransRotate + (mod(time, E2ERTT) == 0);
-        DownloadTempPool    = DownloadTempPool - StartSymbol .* CodeSpeed .* Rnd(PlayTime) + ...                                 %减去播放量
-                              PlayAvgSpeed .* E2ERTT .* (mod(time, E2ERTT) == 0);                                                 %每传输轮次增加下载量
-        PauseCount          = PauseCount + (DownloadTempPool < CodeSpeed .* Rnd(PlayTime)) .* StartSymbol;
-        StartSymbol         = StartSymbol - (DownloadTempPool < CodeSpeed .* Rnd(PlayTime)) .* StartSymbol + ...                 %刚刚开始卡顿的数目
-                            (~StartSymbol) .* (DownloadTempPool > 2700 * CodeSpeed);                                             %卡顿还没有开始的数目
+        PlayTime            = time - PauseTotal;                                                                                %播放时间
+        DownloadTempPool    = DownloadTempPool - StartSymbol .* CodeSpeed .* RndCS(PlayTime) + ...                              %减去播放量
+                              PlayAvgSpeed .* RndPAS(time) .* E2ERTT .* (mod(time, E2ERTT) == 0);                               %每传输轮次增加下载量
+        PauseCount          = PauseCount + (DownloadTempPool < CodeSpeed .* RndCS(PlayTime)) .* StartSymbol;                    %卡段时间
+        StartSymbol         = StartSymbol - (DownloadTempPool < CodeSpeed .* RndCS(PlayTime)) .* StartSymbol + ...              %刚刚开始卡顿的数目
+                              (~StartSymbol) .* (DownloadTempPool > 2700 * CodeSpeed);                                          %卡顿还没有开始的数目
         PauseTotal          = PauseTotal + (~StartSymbol);
-    end
-end
-
-function Rnd = CSShake()
-    tmp = MaxwellRnd(300);
-    Rnd = zeros(30000,1);
-    for ii = 1:30000
-        Rnd(ii) = tmp(fix(1 + (ii-1)/100));
     end
 end
