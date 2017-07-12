@@ -3,7 +3,7 @@ its a simple TCP based stream-media Modeling
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 自 变 量 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 #%                                                                      %
-#% 初始缓冲峰值速率(kbps)            initial_speed_peak           %
+#% 初始缓冲峰值速率(kbps)            initial_speed_peak                 %
 #% 端到端环回时间(ms)                E2E_RTT                            %
 #% 播放阶段平均速率(kbps)            play_avg_speed                     %
 #%                                                                      %
@@ -16,10 +16,10 @@ its a simple TCP based stream-media Modeling
 #% 卡顿占比                          pause_percentage                   %
 #%                                                                      %
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-#%                                                                      %
+%                                                                       %
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 其他变量 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 #%                                                                      %
-#% 视频全程感知速率(kbps)            total_avg_speed                 %
+#% 视频全程感知速率(kbps)            total_avg_speed                    %
 #% 卡顿时长(ms)                      pause_time                         %
 #% 播放时长(ms)                      play_time                          %
 #% 播放阶段总时长(ms)                total_time                         %
