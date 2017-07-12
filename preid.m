@@ -7,7 +7,7 @@ function [PreID] = preid(E2ERTT, PlayAvgSpeed, InitialSpeedPeak, CodeSpeed)
     %MaxCwnd             = fix(InitialSpeedPeak .* E2ERTT);          %fix为向0取整，最大窗口大小为一单位时间内的下载量
     %CurrentCwnd         = 1072;                                            %cwnd1 = 2144
     %while sum(StartSymbol) < DataSize
-     PreID           = CodeSpeed.*2000/PlayAvgSpeed; % (~StartSymbol) .* E2ERTT;%每次若没达到开始播放的条件，增加一个单位的时间。
+     PreID           =6e6/PlayAvgSpeed; % (~StartSymbol) .* E2ERTT;%每次若没达到开始播放的条件，增加一个单位的时间。
      %   CurrentCwnd         = 2 * CurrentCwnd .* (CurrentCwnd < 0.5 * MaxCwnd) + ...
       %                        0.75 * MaxCwnd .* (CurrentCwnd >= 0.5 * MaxCwnd);%瞬时窗口大小的变化
        % CurrentSpeed        = (~StartSymbol) .* CurrentCwnd;            %瞬时速度即为瞬时窗口的大小
