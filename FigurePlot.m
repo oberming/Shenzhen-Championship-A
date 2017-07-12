@@ -14,6 +14,7 @@ function FigurePlot(PlayAvgSpeed, PauseTotal, OOPauseTotal, InitialSpeedPeak, In
     plot(InitialSpeedPeak,OOInitialDelay,'b. ')
     hold off
     xlabel InitialSpeedPeak;
+    axis([0 12e4 0 3.5e4])
     ylabel InitialDelay;
 
     figure(3)
