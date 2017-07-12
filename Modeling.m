@@ -9,8 +9,8 @@ end
 
 function InitialPreDelay = InitialPrepare(E2ERTT, TotalAvgSpeed, InitialSpeedPeak)
     InitialPreDelay = 2 .* E2ERTT;
-    adPack          = 3e6;
-    InitialPreDelay = InitialPreDelay + adPack ./ TotalAvgSpeed .* (TotalAvgSpeed >= 380);
+    adPack          = 7650000;
+    InitialPreDelay = InitialPreDelay + adPack ./ (0.75 .* InitialSpeedPeak) .* (TotalAvgSpeed >= 380);
 end
 
 function [InitialDataAmong, InitialDelay, DownloadTempPool] = ModelI(E2ERTT, InitialSpeedPeak, CodeSpeed, TotalAvgSpeed)

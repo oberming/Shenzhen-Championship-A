@@ -7,12 +7,14 @@ OOPauseCount        = zeros(1, max(size(CodeSpeed)));
 RndCS               = CSShake();
 RndPAS              = MaxwellRnd(30000);
 tic
-    for i = 1:max(size(CodeSpeed))
-        [OOInitialDataAmong(i), OOPauseTotal(i), OOInitialDelay(i), OOPauseCount(i)] = ...
-        Modeling(E2ERTT(i), PlayAvgSpeed(i), InitialSpeedPeak(i), CodeSpeed(i), RndCS, RndPAS, TotalAvgSpeed(i));
+    for ii = 1:max(size(CodeSpeed))
+        [OOInitialDataAmong(ii), OOPauseTotal(ii), OOInitialDelay(ii), OOPauseCount(ii)] = ...
+        Modeling(E2ERTT(ii), PlayAvgSpeed(ii), InitialSpeedPeak(ii), CodeSpeed(ii), RndCS, RndPAS, TotalAvgSpeed(ii));
     end
 toc
-clear i;
+clear ii;
+clear RndCS;
+clear RndPAS
 OOInitialDelay      = OOInitialDelay';
 OOPauseTotal        = OOPauseTotal';
 OOInitialDataAmong  = OOInitialDataAmong';
