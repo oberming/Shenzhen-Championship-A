@@ -14,7 +14,7 @@ tic
 toc
 clear ii;
 clear RndCS;
-clear RndPAS
+clear RndPAS;
 OOInitialDelay      = OOInitialDelay';
 OOPauseTotal        = OOPauseTotal';
 OOInitialDataAmong  = OOInitialDataAmong';
