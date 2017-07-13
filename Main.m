@@ -1,9 +1,9 @@
 cc;
-load exdata
-OOInitialDataAmong  = zeros(1, max(size(CodeSpeed)));
-OOInitialDelay      = zeros(1, max(size(CodeSpeed)));
-OOPauseTotal        = zeros(1, max(size(CodeSpeed)));
-OOPauseCount        = zeros(1, max(size(CodeSpeed)));
+load data
+OOInitialDataAmong  = zeros(max(size(CodeSpeed)), 1);
+OOInitialDelay      = zeros(max(size(CodeSpeed)), 1);
+OOPauseTotal        = zeros(max(size(CodeSpeed)), 1);
+OOPauseCount        = zeros(max(size(CodeSpeed)), 1);
 RndCS               = CSShake();
 RndPAS              = MaxwellRnd(30000);
 tic
@@ -12,14 +12,7 @@ tic
         Modeling(E2ERTT(ii), PlayAvgSpeed(ii), InitialSpeedPeak(ii), CodeSpeed(ii), RndCS, RndPAS, TotalAvgSpeed(ii));
     end
 toc
-clear ii;
-clear RndCS;
-clear RndPAS;
-OOInitialDelay      = OOInitialDelay';
-OOPauseTotal        = OOPauseTotal';
-OOInitialDataAmong  = OOInitialDataAmong';
-OOPauseCount        = OOPauseCount';
-
+clear ii RndCS RndPAS;
 
 FigurePlot(PlayAvgSpeed, PauseTotal, OOPauseTotal, InitialSpeedPeak, InitialDelay, OOInitialDelay, InitialDataAmong, OOInitialDataAmong, CodeSpeed, PauseCount, OOPauseCount)
 %作图
