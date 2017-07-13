@@ -5,7 +5,7 @@ OOInitialDelay      = zeros(max(size(CodeSpeed)), 1);
 OOPauseTotal        = zeros(max(size(CodeSpeed)), 1);
 OOPauseCount        = zeros(max(size(CodeSpeed)), 1);
 RndCS               = CSShake();
-RndPAS              = MaxwellRnd(30000);
+RndPAS              = PASShake();
 tic
     for ii = 1:max(size(CodeSpeed))
         [OOInitialDataAmong(ii), OOPauseTotal(ii), OOInitialDelay(ii), OOPauseCount(ii)] = ...
