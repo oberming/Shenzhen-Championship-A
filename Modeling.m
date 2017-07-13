@@ -12,7 +12,7 @@ end
 
 function [InitialDataAmong, InitialDelay, DownloadTempPool] = ModelI(E2ERTT, InitialSpeedPeak, CodeSpeed, PlayAvgSpeed)
     global DataSize    
-    InitialDelay        = (5.5 .* E2ERTT .* ones(DataSize, 1));     %初始时延基本值为5.5个端到端时间
+    InitialDelay        = (2.*E2ERTT + zeros(DataSize, 1));     %初始时延基本值为5.5个端到端时间
     StartSymbol         = false(DataSize, 1);                       %开始播放的判断
     DownloadTempPool    = (zeros(DataSize, 1));                     %引入下载池
     MaxCwnd             = fix(InitialSpeedPeak .* E2ERTT);          %fix为向0取整，最大窗口大小为一单位时间内的下载量
