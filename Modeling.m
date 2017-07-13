@@ -8,6 +8,7 @@ function [InitialDataAmong ,PauseTotal, InitialDelay, PauseCount] = Modeling(E2E
     [InitialDataAmong ,InitialDelay, DownloadTempPool]  = ModelI(E2ERTT, InitialSpeedPeak, CodeSpeed, PlayAvgSpeed);
     InitialDelay = InitialDelay + PreID;
     [PauseTotal, PauseCount]                            = ModelP(DownloadTempPool, PlayAvgSpeed, CodeSpeed, E2ERTT);
+    %CodeSpeed1          = randming(CodeSpeed);
 end
 
 function [InitialDataAmong, InitialDelay, DownloadTempPool] = ModelI(E2ERTT, InitialSpeedPeak, CodeSpeed, PlayAvgSpeed)
@@ -30,7 +31,7 @@ function [InitialDataAmong, InitialDelay, DownloadTempPool] = ModelI(E2ERTT, Ini
     InitialDataAmong = DownloadTempPool / 8;
 end
 
-function [PauseTotal, PauseCount] = ModelP(DownloadTempPool, PlayAvgSpeed, CodeSpeed, E2ERTT)
+function [PauseTotal, PauseCount] = ModelP(DownloadTempPool, PlayAvgSpeed, CodeSpeed, E2ERTT,CodeSpeed1)
     global DataSize    
     k = (3.46e-4 .* PlayAvgSpeed + 0.1);
     k = (k > 1.2) .* k + (k <= 1.2) .* 1.2;
@@ -42,7 +43,7 @@ function [PauseTotal, PauseCount] = ModelP(DownloadTempPool, PlayAvgSpeed, CodeS
     while time < 30000
         time                = time + 1;
         DownloadTempPool    = DownloadTempPool - StartSymbol .* CodeSpeed + PlayAvgSpeed  ./ k;
-        PauseCount          = PauseCount + (DownloadTempPool < CodeSpeed) .* StartSymbol;
+        PauseCount          = PauseCount + (DownloadTempPool < CodeSpeed) .* StartSymbol;% + (CodeSpeed1 > limitation) + (CodeSpeed1(time,1)>4000);
         StartSymbol         = StartSymbol - (DownloadTempPool < CodeSpeed) .* StartSymbol + ...                 %刚刚开始卡顿的数目
                             (~StartSymbol) .* (DownloadTempPool > 2700 * CodeSpeed ./ k);                       %卡顿还没有开始的数目
         PauseTotal          = PauseTotal + (~StartSymbol);
