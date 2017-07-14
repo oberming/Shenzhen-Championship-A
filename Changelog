@@ -13,6 +13,9 @@ end
 end
 
 13 July 2017
-
+    我们引入了下载门限 2700 ms * CodeSpeed kbps
+    卡顿时间没有太大变化
+    存在问题是难以保证这样之后的 PAS = PAS ori
+    可尝试引入中断下载时间的symbol以补偿
 end
 
