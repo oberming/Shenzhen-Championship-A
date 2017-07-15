@@ -1,51 +1,53 @@
-function [InitialDataAmong ,PauseTotal, InitialDelay, PauseCount] = Modeling(E2ERTT, PlayAvgSpeed, InitialSpeedPeak, CodeSpeed)
-% The discribetion is in describe.m
-% 引入 Download Temp Pool
+function [InitialDataAmong, PauseTotal, InitialDelay, PauseCount] = Modeling(E2ERTT, PlayAvgSpeed, InitialSpeedPeak, CodeSpeed, RndCS, RndPAS, TotalAvgSpeed)
     global DataSize
-    DataSize        = max(size(CodeSpeed));
-    %global PreID
-    [PreID]         = preid(E2ERTT, PlayAvgSpeed, InitialSpeedPeak, CodeSpeed);
-    [InitialDataAmong ,InitialDelay, DownloadTempPool]  = ModelI(E2ERTT, InitialSpeedPeak, CodeSpeed, PlayAvgSpeed);
-    InitialDelay = InitialDelay + PreID;
-    [PauseTotal, PauseCount]                            = ModelP(DownloadTempPool, PlayAvgSpeed, CodeSpeed, E2ERTT);
-    %CodeSpeed1          = randming(CodeSpeed);
+    DataSize                                            = max(size(CodeSpeed));
+    InitialPreDelay                                     = InitialPrepare(E2ERTT, TotalAvgSpeed, InitialSpeedPeak);
+    [InitialDataAmong ,InitialDelay, DownloadTempPool]  = ModelI(E2ERTT, InitialSpeedPeak, CodeSpeed, TotalAvgSpeed);
+    InitialDelay                                        = InitialDelay + InitialPreDelay;
+    [PauseTotal, PauseCount]                            = ModelP(DownloadTempPool, PlayAvgSpeed, CodeSpeed, E2ERTT, RndCS, RndPAS);
 end
 
-function [InitialDataAmong, InitialDelay, DownloadTempPool] = ModelI(E2ERTT, InitialSpeedPeak, CodeSpeed, PlayAvgSpeed)
+function InitialPreDelay = InitialPrepare(E2ERTT, TotalAvgSpeed, InitialSpeedPeak)
+    InitialPreDelay = 2 .* E2ERTT;
+    adPack          = 5050000;
+    InitialPreDelay = InitialPreDelay + adPack ./ (0.5 * unifrnd(InitialSpeedPeak - 500,InitialSpeedPeak + 500)) .* (TotalAvgSpeed >= 380);
+    %
+end
+
+function [InitialDataAmong, InitialDelay, DownloadTempPool] = ModelI(E2ERTT, InitialSpeedPeak, CodeSpeed, TotalAvgSpeed)
     global DataSize    
-    InitialDelay        = (2.*E2ERTT + zeros(DataSize, 1));     %初始时延基本值为5.5个端到端时间
-    StartSymbol         = false(DataSize, 1);                       %开始播放的判断
-    DownloadTempPool    = (zeros(DataSize, 1));                     %引入下载池
-    MaxCwnd             = fix(InitialSpeedPeak .* E2ERTT);          %fix为向0取整，最大窗口大小为一单位时间内的下载量
-    CurrentCwnd         = 1072;                                            %cwnd1 = 2144
+    InitialDelay        = zeros(DataSize, 1);
+    StartSymbol         = false(DataSize, 1);
+    DownloadTempPool    = zeros(DataSize, 1);
+    MaxCwnd             = fix(InitialSpeedPeak .* E2ERTT);
+    CurrentCwnd         = 10720;                                            %cwnd1 = 21440
     while sum(StartSymbol) < DataSize
-        InitialDelay        = + InitialDelay + (~StartSymbol) .* E2ERTT;%每次若没达到开始播放的条件，增加一个单位的时间。
+        InitialDelay        = InitialDelay + (~StartSymbol) .* E2ERTT;
         CurrentCwnd         = 2 * CurrentCwnd .* (CurrentCwnd < 0.5 * MaxCwnd) + ...
-                              0.75 * MaxCwnd .* (CurrentCwnd >= 0.5 * MaxCwnd);%瞬时窗口大小的变化
-        CurrentSpeed        = (~StartSymbol) .* CurrentCwnd;            %瞬时速度即为瞬时窗口的大小
-        DownloadTempPool    = DownloadTempPool + CurrentSpeed;          %缓冲池
-        StartSymbol         = logical((DownloadTempPool > CodeSpeed .* 4192)  + ...             %原来是4192
-                                      (InitialSpeedPeak < 7000) .* (PlayAvgSpeed < 362) ... 
-                                      .* (DownloadTempPool > 200 * CodeSpeed));%播放开始的判断条件，即下载池达到4秒或（初始峰速小于7000且播放速率小玉362且下载池大于200毫秒
+                              0.75 * MaxCwnd .* (CurrentCwnd >= 0.5 * MaxCwnd);        %本来为0.5maxcwnd，上面也是
+        CurrentSpeed        = (~StartSymbol) .* CurrentCwnd;
+        DownloadTempPool    = DownloadTempPool + CurrentSpeed;
+        StartSymbol         = logical((DownloadTempPool > CodeSpeed .* 4192)  + ...
+                                      (TotalAvgSpeed < 380) .* (DownloadTempPool > 200 * CodeSpeed));
     end
     InitialDataAmong = DownloadTempPool / 8;
 end
 
-function [PauseTotal, PauseCount] = ModelP(DownloadTempPool, PlayAvgSpeed, CodeSpeed, E2ERTT,CodeSpeed1)
-    global DataSize    
-    k = (3.46e-4 .* PlayAvgSpeed + 0.1);
-    k = (k > 1.2) .* k + (k <= 1.2) .* 1.2;
+function [PauseTotal, PauseCount] = ModelP(DownloadTempPool, PlayAvgSpeed, CodeSpeed, E2ERTT, RndCS, RndPAS)
+    global DataSize
     time                = 0;
     PauseTotal          = zeros(DataSize, 1);
     StartSymbol         = true (DataSize, 1);
     PauseCount          = zeros(DataSize, 1);
-    DownloadTempPool    = DownloadTempPool ./ k;
     while time < 30000
         time                = time + 1;
-        DownloadTempPool    = DownloadTempPool - StartSymbol .* CodeSpeed + PlayAvgSpeed  ./ k;
-        PauseCount          = PauseCount + (DownloadTempPool < CodeSpeed) .* StartSymbol;% + (CodeSpeed1 > limitation) + (CodeSpeed1(time,1)>4000);
-        StartSymbol         = StartSymbol - (DownloadTempPool < CodeSpeed) .* StartSymbol + ...                 %刚刚开始卡顿的数目
-                            (~StartSymbol) .* (DownloadTempPool > 2700 * CodeSpeed ./ k);                       %卡顿还没有开始的数目
+        PlayTime            = time - PauseTotal;                                                                                %播放时间
+        DownloadTempPool    = DownloadTempPool - 1.2 .* StartSymbol .* CodeSpeed .* RndCS(PlayTime) + ...                              %减去播放量
+                             0.75 .* StartSymbol .*  PlayAvgSpeed .* RndPAS(time) .* E2ERTT .* (mod(time, E2ERTT) == 0) .* (DownloadTempPool < 2700 .* CodeSpeed) + ...
+                             2 .* (~StartSymbol) .*  PlayAvgSpeed .* RndPAS(time) .* E2ERTT .* (mod(time, E2ERTT) == 0);      %播放时存货大于0.5秒就不下载，小于0.5秒就按0.75倍下载，停止时按1.3倍高速下载
+        PauseCount          = PauseCount + (DownloadTempPool < CodeSpeed .* RndCS(PlayTime)) .* StartSymbol;                    %卡段时间
+        StartSymbol         = StartSymbol - (DownloadTempPool < CodeSpeed .* RndCS(PlayTime)) .* StartSymbol + ...              %刚刚开始卡顿的数目
+                              (~StartSymbol) .* (DownloadTempPool > 2700 * CodeSpeed);                                          %卡顿还没有开始的数目
         PauseTotal          = PauseTotal + (~StartSymbol);
     end
 end
