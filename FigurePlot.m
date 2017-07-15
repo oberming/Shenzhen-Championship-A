@@ -1,8 +1,12 @@
 function FigurePlot(PlayAvgSpeed, PauseTotal, OOPauseTotal, InitialSpeedPeak, InitialDelay, OOInitialDelay, InitialDataAmong, OOInitialDataAmong, CodeSpeed, PauseCount, OOPauseCount)
     figure(1);
-    plot3(PlayAvgSpeed, PauseTotal, PauseCount, 'r. ')
+    %plot3(PlayAvgSpeed, PauseTotal, PauseCount, 'r. ')
+    %hold on
+    %plot3(PlayAvgSpeed, OOPauseTotal, OOPauseCount, 'b. ')
+    %hold off
+    plot(PlayAvgSpeed,PauseTotal,'r.')
     hold on
-    plot3(PlayAvgSpeed, OOPauseTotal, OOPauseCount, 'b. ')
+    plot(PlayAvgSpeed,OOPauseTotal,'b.')
     hold off
     xlabel playAvgSpeed;
     ylabel pauseTotal;

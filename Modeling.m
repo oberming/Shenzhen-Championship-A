@@ -39,15 +39,29 @@ function [PauseTotal, PauseCount] = ModelP(DownloadTempPool, PlayAvgSpeed, CodeS
     PauseTotal          = zeros(DataSize, 1);
     StartSymbol         = true (DataSize, 1);
     PauseCount          = zeros(DataSize, 1);
-    while time < 30000
-        time                = time + 1;
-        PlayTime            = time - PauseTotal;                                                                                %播放时间
-        DownloadTempPool    = DownloadTempPool - 1.2 .* StartSymbol .* CodeSpeed .* RndCS(PlayTime) + ...                              %减去播放量
-                             0.75 .* StartSymbol .*  PlayAvgSpeed .* RndPAS(time) .* E2ERTT .* (mod(time, E2ERTT) == 0) .* (DownloadTempPool < 2700 .* CodeSpeed) + ...
-                             2 .* (~StartSymbol) .*  PlayAvgSpeed .* RndPAS(time) .* E2ERTT .* (mod(time, E2ERTT) == 0);      %播放时存货大于0.5秒就不下载，小于0.5秒就按0.75倍下载，停止时按1.3倍高速下载
-        PauseCount          = PauseCount + (DownloadTempPool < CodeSpeed .* RndCS(PlayTime)) .* StartSymbol;                    %卡段时间
-        StartSymbol         = StartSymbol - (DownloadTempPool < CodeSpeed .* RndCS(PlayTime)) .* StartSymbol + ...              %刚刚开始卡顿的数目
-                              (~StartSymbol) .* (DownloadTempPool > 2700 * CodeSpeed);                                          %卡顿还没有开始的数目
-        PauseTotal          = PauseTotal + (~StartSymbol);
+    if PlayAvgSpeed < 5200
+        while time < 30000
+            time                = time + 1;
+            PlayTime            = time - PauseTotal;                                                                                %播放时间
+            DownloadTempPool    = DownloadTempPool - 1.2 .* StartSymbol .* CodeSpeed .* RndCS(PlayTime) + ...                              %减去播放量
+                             0.7 .* StartSymbol .* PlayAvgSpeed .* RndPAS(time) .* E2ERTT .* (mod(time, E2ERTT) == 0) .* (DownloadTempPool < 2700 .* CodeSpeed) + ...
+                           +  1.75 .* (~StartSymbol)  .* PlayAvgSpeed .* RndPAS(time) .* E2ERTT .* (mod(time, E2ERTT) == 0);      %播放时存货大于0.5秒就不下载，小于0.5秒就按0.75倍下载，停止时按1.3倍高速下载，每个rtt结算一次
+            PauseCount          = PauseCount + (DownloadTempPool < CodeSpeed .* RndCS(PlayTime)) .* StartSymbol;                    %卡段时间
+            StartSymbol         = StartSymbol - (DownloadTempPool < CodeSpeed .* RndCS(PlayTime)) .* StartSymbol + ...              %刚刚开始卡顿的数目
+                              (~StartSymbol) .* (DownloadTempPool > 2400 * CodeSpeed);                                          %卡顿还没有开始的数目
+            PauseTotal          = PauseTotal + (~StartSymbol);
+        end
+    else
+        while time < 30000
+            time                = time + 1;
+            PlayTime            = time - PauseTotal;                                                                                %播放时间
+            DownloadTempPool    = DownloadTempPool - 1.2 .* StartSymbol .* CodeSpeed .* RndCS(PlayTime) + ...                              %减去播放量
+                             0.65 .* StartSymbol .*  PlayAvgSpeed .* RndPAS(time) .* E2ERTT .* (mod(time, E2ERTT) == 0) .* (DownloadTempPool < 1400 .* CodeSpeed) + ...
+                           +  1.85 .* (~StartSymbol) .*  PlayAvgSpeed .* RndPAS(time) .* E2ERTT .* (mod(time, E2ERTT) == 0);      %播放时存货大于0.5秒就不下载，小于0.5秒就按0.75倍下载，停止时按1.3倍高速下载，每个rtt结算一次
+            PauseCount          = PauseCount + (DownloadTempPool < CodeSpeed .* RndCS(PlayTime)) .* StartSymbol;                    %卡段时间
+            StartSymbol         = StartSymbol - (DownloadTempPool < CodeSpeed .* RndCS(PlayTime)) .* StartSymbol + ...              %刚刚开始卡顿的数目
+                              (~StartSymbol) .* (DownloadTempPool > 1400 * CodeSpeed);                                          %卡顿还没有开始的数目
+            PauseTotal          = PauseTotal + (~StartSymbol);
+        end
     end
 end
