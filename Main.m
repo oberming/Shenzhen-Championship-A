@@ -1,28 +1,30 @@
 cc;
-<<<<<<< HEAD
-load exdata                                               %载入数据
-=======
-load exdata
->>>>>>> acc8ced90a659ca76d44f0702414298c087214bb
+load data
 OOInitialDataAmong  = zeros(max(size(CodeSpeed)), 1);
 OOInitialDelay      = zeros(max(size(CodeSpeed)), 1);
 OOPauseTotal        = zeros(max(size(CodeSpeed)), 1);
-OOPauseCount        = zeros(max(size(CodeSpeed)), 1);   %创建空矩阵用以存放数据
-RndCS               = CSShake();
-<<<<<<< HEAD
-RndPAS              = PASShake();                       %得到随机数矩阵
-=======
->>>>>>> acc8ced90a659ca76d44f0702414298c087214bb
+OOPauseCount        = zeros(max(size(CodeSpeed)), 1);
+RndCS               = normrnd(1,0.33,60000,1);
+Replay              = 1000  + (InitialSpeedPeak > 10000).*( cpmodelFOR10001(InitialSpeedPeak,E2ERTT,PlayAvgSpeed)) .* 1700 ...
+                            + (InitialSpeedPeak < 10001).*( cpmodelFOR10000(InitialSpeedPeak,E2ERTT,PlayAvgSpeed)) .* 1700;
 tic
     for ii = 1:max(size(CodeSpeed))
         [OOInitialDataAmong(ii), OOPauseTotal(ii), OOInitialDelay(ii), OOPauseCount(ii)] = ...
-        Modeling(E2ERTT(ii), PlayAvgSpeed(ii), InitialSpeedPeak(ii), CodeSpeed(ii), RndCS, TotalAvgSpeed(ii));
-        ii
+        Modeling(E2ERTT(ii), PlayAvgSpeed(ii), InitialSpeedPeak(ii), CodeSpeed(ii), RndCS, TotalAvgSpeed(ii), Replay(ii));
     end
 toc
-clear ii RndCS RndPAS;
+clear ii RndCS;
 
-FigurePlot(PlayAvgSpeed, PauseTotal, OOPauseTotal, InitialSpeedPeak, InitialDelay, OOInitialDelay, InitialDataAmong, OOInitialDataAmong, CodeSpeed, PauseCount, OOPauseCount)
+FigurePlot(PlayAvgSpeed, PauseTotal, OOPauseTotal, InitialSpeedPeak, InitialDelay, OOInitialDelay, InitialDataAmong, OOInitialDataAmong, CodeSpeed, PauseCount, OOPauseCount, E2ERTT)
 %作图
 [ErrPC, ErrID,ErrPT,ErrIDA] = ErrorAnalyse(PauseCount ,InitialDelay, PauseTotal, InitialDataAmong, OOInitialDelay, OOPauseTotal, OOInitialDataAmong, OOPauseCount)
+[ABSMerrIDA, MerrIDA, ABSMerrID, MerrID, ABSMerrPT, MerrPT] = MeanErrAnalyse(InitialDelay, PauseTotal, InitialDataAmong, OOInitialDelay, OOPauseTotal, OOInitialDataAmong)
+
+%OOVMOS = Vrelation(PauseTotal,  InitialDelay);
+figure(6)
+plot3(PauseTotal,InitialDelay,VMOS,'r. ');
+hold on
+plot3(PauseTotal,InitialDelay,OOVMOS,'b. ');
+axis([0,30000,0,35000,0,5])
+
 %误差分析

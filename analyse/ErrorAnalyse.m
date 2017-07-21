@@ -3,7 +3,6 @@ function [ErrPC, ErrID,ErrPT,ErrIDA] = ErrorAnalyse(PauseCount ,InitialDelay, Pa
 %PT is for PauseTotal
 %IDA is for InitialDataAmong
     DataSize    = max(size(InitialDelay));
-    PTDS        = sum(PauseTotal ~= 0);                         %PauseTotal DataSize
     ABSTmpID    = abs(OOInitialDelay     - InitialDelay);
     ABSTmpPT    = abs(OOPauseTotal       - PauseTotal);
     ABSTmpIDA   = abs(OOInitialDataAmong - InitialDataAmong);
@@ -15,11 +14,11 @@ function [ErrPC, ErrID,ErrPT,ErrIDA] = ErrorAnalyse(PauseCount ,InitialDelay, Pa
                    sum(ABSTmpID     ./ InitialDelay     < 0.40) ./ DataSize;
                    sum(ABSTmpID     ./ InitialDelay     < 0.80) ./ DataSize];
 
-    ErrPT       = [sum(ABSTmpPT     ./ PauseTotal       < 0.05) ./ PTDS; 
-                   sum(ABSTmpPT     ./ PauseTotal       < 0.10) ./ PTDS;
-                   sum(ABSTmpPT     ./ PauseTotal       < 0.20) ./ PTDS;
-                   sum(ABSTmpPT     ./ PauseTotal       < 0.40) ./ PTDS;
-                   sum(ABSTmpPT     ./ PauseTotal       < 0.80) ./ PTDS];
+    ErrPT       = [sum((ABSTmpPT                        <  100)); 
+                   sum((ABSTmpPT                        <  200));
+                   sum((ABSTmpPT                        <  400));
+                   sum((ABSTmpPT                        <  800));
+                   sum((ABSTmpPT                        <  1600))];
 
     ErrIDA      = [sum(ABSTmpIDA    ./ InitialDataAmong < 0.05) ./ DataSize; 
                    sum(ABSTmpIDA    ./ InitialDataAmong < 0.10) ./ DataSize;
@@ -47,5 +46,4 @@ function [ErrPC, ErrID,ErrPT,ErrIDA] = ErrorAnalyse(PauseCount ,InitialDelay, Pa
                    -8, sum((PauseCount - OOPauseCount == -8));
                     9, sum((PauseCount - OOPauseCount ==  9));
                    -9, sum((PauseCount - OOPauseCount == -9))];
-
 end
