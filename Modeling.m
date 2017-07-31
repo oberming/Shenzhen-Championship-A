@@ -1,17 +1,16 @@
-function [InitialDataAmong, PauseTotal, InitialDelay, PauseCount] = Modeling(E2ERTT, PlayAvgSpeed, InitialSpeedPeak, CodeSpeed, RndCS, RndPAS, TotalAvgSpeed)
+function [InitialDataAmong, PauseTotal, InitialDelay, PauseCount] = Modeling(E2ERTT, PlayAvgSpeed, InitialSpeedPeak, CodeSpeed, RndCS, TotalAvgSpeed, Replay)
     global DataSize
     DataSize                                            = max(size(CodeSpeed));
-    InitialPreDelay                                     = InitialPrepare(E2ERTT, TotalAvgSpeed, InitialSpeedPeak);
+    InitialPreDelay                                     = InitialPrepare(E2ERTT, TotalAvgSpeed, InitialSpeedPeak, PlayAvgSpeed);
     [InitialDataAmong ,InitialDelay, DownloadTempPool]  = ModelI(E2ERTT, InitialSpeedPeak, CodeSpeed, TotalAvgSpeed);
     InitialDelay                                        = InitialDelay + InitialPreDelay;
-    [PauseTotal, PauseCount]                            = ModelP(DownloadTempPool, PlayAvgSpeed, CodeSpeed, E2ERTT, RndCS, RndPAS);
+    [PauseTotal, PauseCount]                            = ModelP(DownloadTempPool, PlayAvgSpeed, CodeSpeed, E2ERTT, RndCS, Replay);
 end
 
-function InitialPreDelay = InitialPrepare(E2ERTT, TotalAvgSpeed, InitialSpeedPeak)
-    InitialPreDelay = 2 .* E2ERTT;
-    adPack          = 5050000;
-    InitialPreDelay = InitialPreDelay + adPack ./ (0.5 * unifrnd(InitialSpeedPeak - 500,InitialSpeedPeak + 500)) .* (TotalAvgSpeed >= 380);
-    %
+function InitialPreDelay = InitialPrepare(E2ERTT, TotalAvgSpeed, InitialSpeedPeak, PlayAvgSpeed)
+    InitialPreDelay = 2.5 .* E2ERTT;
+    adPack          = 4200000;
+    InitialPreDelay = InitialPreDelay + adPack ./ (PlayAvgSpeed .* (2 + cpmodel(InitialSpeedPeak,E2ERTT,PlayAvgSpeed))) .* (TotalAvgSpeed >= 380);
 end
 
 function [InitialDataAmong, InitialDelay, DownloadTempPool] = ModelI(E2ERTT, InitialSpeedPeak, CodeSpeed, TotalAvgSpeed)
@@ -19,49 +18,79 @@ function [InitialDataAmong, InitialDelay, DownloadTempPool] = ModelI(E2ERTT, Ini
     InitialDelay        = zeros(DataSize, 1);
     StartSymbol         = false(DataSize, 1);
     DownloadTempPool    = zeros(DataSize, 1);
-    MaxCwnd             = fix(InitialSpeedPeak .* E2ERTT);
-    CurrentCwnd         = 10720;                                            %cwnd1 = 21440
+    MaxCwnd             = InitialSpeedPeak .* E2ERTT;
+    CurrentCwnd         = 20640;                                            %21440 - 800; cwnd1 = 42880
     while sum(StartSymbol) < DataSize
         InitialDelay        = InitialDelay + (~StartSymbol) .* E2ERTT;
         CurrentCwnd         = 2 * CurrentCwnd .* (CurrentCwnd < 0.5 * MaxCwnd) + ...
-                              0.75 * MaxCwnd .* (CurrentCwnd >= 0.5 * MaxCwnd);        %本来为0.5maxcwnd，上面也是
+                              0.75 * MaxCwnd .* (CurrentCwnd >= 0.5 * MaxCwnd);
         CurrentSpeed        = (~StartSymbol) .* CurrentCwnd;
         DownloadTempPool    = DownloadTempPool + CurrentSpeed;
-        StartSymbol         = logical((DownloadTempPool > CodeSpeed .* 4192)  + ...
+        StartSymbol         = logical((DownloadTempPool > CodeSpeed .* 4000)  + ...
                                       (TotalAvgSpeed < 380) .* (DownloadTempPool > 200 * CodeSpeed));
     end
-    InitialDataAmong = DownloadTempPool / 8;
+    InitialDataAmong = DownloadTempPool * 0.129844961240310;
 end
 
-function [PauseTotal, PauseCount] = ModelP(DownloadTempPool, PlayAvgSpeed, CodeSpeed, E2ERTT, RndCS, RndPAS)
-    global DataSize
-    time                = 0;
-    PauseTotal          = zeros(DataSize, 1);
-    StartSymbol         = true (DataSize, 1);
-    PauseCount          = zeros(DataSize, 1);
-    if PlayAvgSpeed < 5200
-        while time < 30000
-            time                = time + 1;
-            PlayTime            = time - PauseTotal;                                                                                %播放时间
-            DownloadTempPool    = DownloadTempPool - 1.2 .* StartSymbol .* CodeSpeed .* RndCS(PlayTime) + ...                              %减去播放量
-                             0.7 .* StartSymbol .* PlayAvgSpeed .* RndPAS(time) .* E2ERTT .* (mod(time, E2ERTT) == 0) .* (DownloadTempPool < 2700 .* CodeSpeed) + ...
-                           +  1.75 .* (~StartSymbol)  .* PlayAvgSpeed .* RndPAS(time) .* E2ERTT .* (mod(time, E2ERTT) == 0);      %播放时存货大于0.5秒就不下载，小于0.5秒就按0.75倍下载，停止时按1.3倍高速下载，每个rtt结算一次
-            PauseCount          = PauseCount + (DownloadTempPool < CodeSpeed .* RndCS(PlayTime)) .* StartSymbol;                    %卡段时间
-            StartSymbol         = StartSymbol - (DownloadTempPool < CodeSpeed .* RndCS(PlayTime)) .* StartSymbol + ...              %刚刚开始卡顿的数目
-                              (~StartSymbol) .* (DownloadTempPool > 2400 * CodeSpeed);                                          %卡顿还没有开始的数目
-            PauseTotal          = PauseTotal + (~StartSymbol);
+function [PauseTotal, PauseCount] = ModelP(DownloadTempPool, PlayAvgSpeed, CodeSpeed, E2ERTT, RndCS, Replay)
+    StartSymbol = true;
+    RTTs = E2ERTT;
+    RTTd = 0.5 .* E2ERTT;
+    time = 0;
+    pkg  = 1;
+    Pipe = struct('PkgNo',1,'SendTimeStamp',0,'RecTimePre',E2ERTT,'Acked',0);
+    SndT = 4288 ./ PlayAvgSpeed;
+    PauseCount = 0;
+    PauseTotal = 0;
+    count = 0;
+    while time < 30000
+        %一般性新
+        count = count + 1;
+        PlayTime = time - PauseTotal;
+        pkg  = pkg + 1;
+        time = time + SndT;
+        RTTc = E2ERTT .* Replay(count);
+        %新流体点
+        Pipe.PkgNo(end + 1) = pkg;
+        Pipe.SendTimeStamp(end + 1) = time;
+        Pipe.RecTimePre(end + 1) = RTTc;
+        Pipe.Acked(end + 1) = 0;
+        %新RTO
+        RTTs = 0.875 .* RTTs + 0.125 .* RTTc;
+        RTTd = 0.75 .* RTTd + 0.25 .* abs(RTTs - RTTc);
+        RTO  = RTTs + 4 .* RTTd;
+        %考察已接收的包
+        Pipe.Acked = (time - Pipe.SendTimeStamp) > Pipe.RecTimePre;
+        PkgAddin = find(Pipe.Acked == 0, 1, 'first') - 1; 
+        %从流中去掉已经顺序收到的包
+        if PkgAddin > 0
+            Pipe.PkgNo = Pipe.PkgNo((PkgAddin + 1):end);
+            Pipe.SendTimeStamp = Pipe.SendTimeStamp((PkgAddin + 1):end);
+            Pipe.RecTimePre = Pipe.RecTimePre((PkgAddin + 1):end);
+            Pipe.Acked = Pipe.Acked((PkgAddin + 1):end);
         end
-    else
-        while time < 30000
-            time                = time + 1;
-            PlayTime            = time - PauseTotal;                                                                                %播放时间
-            DownloadTempPool    = DownloadTempPool - 1.2 .* StartSymbol .* CodeSpeed .* RndCS(PlayTime) + ...                              %减去播放量
-                             0.65 .* StartSymbol .*  PlayAvgSpeed .* RndPAS(time) .* E2ERTT .* (mod(time, E2ERTT) == 0) .* (DownloadTempPool < 1400 .* CodeSpeed) + ...
-                           +  1.85 .* (~StartSymbol) .*  PlayAvgSpeed .* RndPAS(time) .* E2ERTT .* (mod(time, E2ERTT) == 0);      %播放时存货大于0.5秒就不下载，小于0.5秒就按0.75倍下载，停止时按1.3倍高速下载，每个rtt结算一次
-            PauseCount          = PauseCount + (DownloadTempPool < CodeSpeed .* RndCS(PlayTime)) .* StartSymbol;                    %卡段时间
-            StartSymbol         = StartSymbol - (DownloadTempPool < CodeSpeed .* RndCS(PlayTime)) .* StartSymbol + ...              %刚刚开始卡顿的数目
-                              (~StartSymbol) .* (DownloadTempPool > 1400 * CodeSpeed);                                          %卡顿还没有开始的数目
-            PauseTotal          = PauseTotal + (~StartSymbol);
+        %考察超时重传和快恢复并对流体进行清零
+        if ((time - Pipe.SendTimeStamp(1)) > RTO)
+            %Pipe = struct('PkgNo',Pipe.PkgNo(1),'SendTimeStamp',time,'RecTimePre',E2ERTT,'Acked',0);
+            Pipe.PkgNo = Pipe.PkgNo(1);
+            Pipe.SendTimeStamp = time;
+            Pipe.RecTimePre = E2ERTT;
+            Pipe.Acked = 0;
+            pkg  = Pipe.PkgNo(1);
         end
+        %池子变化
+        if StartSymbol == true
+            DownloadTempPool = DownloadTempPool + PkgAddin .* 4128 - SndT .* CodeSpeed .* RndCS(1 + fix(PlayTime));
+        else
+            DownloadTempPool = DownloadTempPool + PkgAddin .* 4128;
+        end
+        %卡顿和重播放判断
+        if (DownloadTempPool < CodeSpeed) && StartSymbol == true
+            StartSymbol = false;
+            PauseCount = PauseCount + 1; 
+        elseif (DownloadTempPool > 2700 * CodeSpeed) && (StartSymbol == false)
+            StartSymbol = true;
+        end
+        PauseTotal = PauseTotal + SndT .* (~StartSymbol);
     end
 end
